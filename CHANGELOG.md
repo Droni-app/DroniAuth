@@ -6,6 +6,24 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.
 
 ---
 
+## [Sin versión] - 2026-04-11 (3)
+
+### Agregado
+- Login con **Google OAuth** usando Laravel Socialite:
+  - Columnas `google_id` y `avatar` en la tabla `users`
+  - `password` pasa a ser nullable para usuarios que solo usan Google
+  - `SocialiteController` con métodos `redirect` y `callback`
+  - Rutas `GET /auth/google` y `GET /auth/google/callback`
+  - Credenciales configurables vía `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` y `GOOGLE_REDIRECT_URI`
+  - Botón "Continuar con Google" con logo SVG oficial en la pantalla de login
+
+### Cambiado
+- **`Clients/Index.vue`:** reemplazado `DuiBadge` (no existe en droni-kit) por `<span>` estilizados equivalentes
+- **Navbar:** logo de marca reemplaza el texto `DroniAuth` en el brand, cambia entre `logo.svg` (claro) y `logo-w.svg` (oscuro)
+- **Navbar:** iconos MDI agregados a ítems de navegación (`mdi-view-dashboard-outline`, `mdi-apps`) y a acciones de la derecha (`mdi-account-circle-outline`, `mdi-logout`)
+
+---
+
 ## [Sin versión] - 2026-04-11 (2)
 
 ### Agregado
