@@ -211,12 +211,12 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
                     </template>
 
                     <template #grant_type="client">
-                        <DuiBadge v-if="client.grant_types?.includes('authorization_code')" color="primary" variant="outline">
+                        <span v-if="client.grant_types?.includes('authorization_code')" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border border-blue-400 text-blue-400">
                             Auth Code
-                        </DuiBadge>
-                        <DuiBadge v-else-if="client.grant_types?.includes('client_credentials')" color="secondary" variant="outline">
+                        </span>
+                        <span v-else-if="client.grant_types?.includes('client_credentials')" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border border-purple-400 text-purple-400">
                             Client Creds
-                        </DuiBadge>
+                        </span>
                         <span v-else class="text-slate-500 text-sm">{{ grantLabel(client.grant_types) }}</span>
                     </template>
 
