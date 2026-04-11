@@ -6,6 +6,23 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.
 
 ---
 
+## [Sin versión] - 2026-04-11 (2)
+
+### Agregado
+- Soporte a CDN de **MDI Icons** (`@mdi/font`) en `app.blade.php`
+- Toggle de **modo claro/oscuro** en el navbar:
+  - Composable `useTheme.js` que lee `localStorage` y aplica la clase `dark` a `<html>`
+  - Predeterminado al tema del sistema (`prefers-color-scheme`) cuando no hay preferencia guardada
+  - Escucha cambios del sistema en tiempo real si el usuario no ha seleccionado un tema manualmente
+  - Script inline en `<head>` para aplicar el tema antes del render y evitar flash
+  - Icono `mdi-weather-sunny` / `mdi-weather-night` alterna según el modo activo
+
+### Cambiado
+- **`app.css`:** agregado `@custom-variant dark` para activar dark mode por clase `.dark` en Tailwind v4
+- **`AuthenticatedLayout.vue`:** fondo del layout usa variantes `dark:` para adaptarse a ambos modos
+
+---
+
 ## [Sin versión] - 2026-04-11
 
 ### Agregado
