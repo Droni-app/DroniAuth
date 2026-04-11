@@ -1,5 +1,4 @@
 <script setup>
-import Modal from '@/Components/Modal.vue';
 import { useForm } from '@inertiajs/vue3';
 import { nextTick, ref } from 'vue';
 
@@ -40,12 +39,14 @@ const closeModal = () => {
             Eliminar mi cuenta
         </DuiButton>
 
-        <Modal :show="confirmingUserDeletion" @close="closeModal">
-            <div class="p-6 space-y-5">
-                <h2 class="text-lg font-semibold text-gray-900">
-                    ¿Estás seguro de que quieres eliminar tu cuenta?
-                </h2>
-                <p class="text-sm text-gray-600">
+        <DuiModal
+            v-model="confirmingUserDeletion"
+            title="¿Estás seguro de que quieres eliminar tu cuenta?"
+            color="danger"
+            @close="closeModal"
+        >
+            <div class="space-y-4">
+                <p class="text-sm">
                     Esta acción es irreversible. Ingresa tu contraseña para confirmar.
                 </p>
 
@@ -58,7 +59,9 @@ const closeModal = () => {
                         @keyup.enter="deleteUser"
                     />
                 </DuiLabel>
+            </div>
 
+            <template #footer>
                 <div class="flex justify-end gap-3">
                     <DuiButton variant="outline" color="neutral" @click="closeModal">
                         Cancelar
@@ -72,7 +75,7 @@ const closeModal = () => {
                         Eliminar cuenta
                     </DuiButton>
                 </div>
-            </div>
-        </Modal>
+            </template>
+        </DuiModal>
     </div>
 </template>

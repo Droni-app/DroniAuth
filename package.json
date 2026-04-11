@@ -21,6 +21,6 @@
         "vue": "^3.4.0"
     },
     "dependencies": {
-        "@dronico/droni-kit": "^1.13.0"
+        "@dronico/droni-kit": "^1.15.0"
     }
 }

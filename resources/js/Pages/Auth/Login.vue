@@ -51,14 +51,7 @@ const submit = () => {
             </DuiLabel>
 
             <div class="flex items-center justify-between">
-                <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        v-model="form.remember"
-                        class="w-4 h-4 rounded accent-blue-500"
-                    />
-                    Recordarme
-                </label>
+                <DuiCheckbox v-model="form.remember" label="Recordarme" />
 
                 <Link
                     v-if="canResetPassword"

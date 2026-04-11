@@ -1,6 +1,5 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import Modal from '@/Components/Modal.vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
@@ -11,11 +10,15 @@ const props = defineProps({
 });
 
 // ─── Estado de paneles ───────────────────────────────────────────────────────
-const showCreateForm  = ref(false);
-const editingClient   = ref(null);
-const deletingClient  = ref(null);
-const secretModal     = ref(!!props.flashSecret);
-const copiedSecret    = ref(false);
+const showCreateForm       = ref(false);
+const editingClient        = ref(null);
+const deletingClient       = ref(null);
+const regeneratingClient   = ref(null);
+const showEditModal        = ref(false);
+const showDeleteModal      = ref(false);
+const showRegenerateModal  = ref(false);
+const secretModal          = ref(!!props.flashSecret);
+const copiedSecret         = ref(false);
 
 // ─── Formulario de creación ──────────────────────────────────────────────────
 const createForm = useForm({
@@ -45,23 +48,24 @@ const startEdit = (client) => {
     editingClient.value = client;
     editForm.name = client.name;
     editForm.redirect_uris = (client.redirect_uris ?? []).join('\n');
+    showEditModal.value = true;
 };
 
 const cancelEdit = () => {
+    showEditModal.value = false;
     editingClient.value = null;
     editForm.reset();
 };
 
 const submitEdit = () => {
     editForm.put(route('clients.update', editingClient.value.id), {
-        onSuccess: () => { editingClient.value = null; editForm.reset(); },
+        onSuccess: () => cancelEdit(),
     });
 };
 
 // ─── Regenerar secret ─────────────────────────────────────────────────────────
-const regeneratingClient = ref(null);
-
 const regenerateSecret = (client) => {
+    showRegenerateModal.value = false;
     regeneratingClient.value = null;
     router.post(route('clients.regenerate-secret', client.id), {}, {
         onSuccess: () => { secretModal.value = true; },
@@ -71,11 +75,17 @@ const regenerateSecret = (client) => {
 // ─── Eliminación ──────────────────────────────────────────────────────────────
 const deleteForm = useForm({});
 
-const confirmDelete = (client) => { deletingClient.value = client; };
+const confirmDelete = (client) => {
+    deletingClient.value = client;
+    showDeleteModal.value = true;
+};
 
 const submitDelete = () => {
     deleteForm.delete(route('clients.destroy', deletingClient.value.id), {
-        onSuccess: () => { deletingClient.value = null; },
+        onSuccess: () => {
+            showDeleteModal.value = false;
+            deletingClient.value = null;
+        },
     });
 };
 
@@ -172,10 +182,7 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
                         </DuiLabel>
 
                         <div class="flex items-center justify-between pt-2">
-                            <label v-if="needsRedirect" class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-                                <input type="checkbox" v-model="createForm.confidential" class="w-4 h-4 rounded accent-blue-500" />
-                                Cliente confidencial (con secret)
-                            </label>
+                            <DuiCheckbox v-if="needsRedirect" v-model="createForm.confidential" label="Cliente confidencial (con secret)" />
                             <span v-else />
 
                             <div class="flex gap-3">
@@ -194,47 +201,47 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
             <!-- Tabla de clientes -->
             <DuiCard v-if="clients.length > 0">
                 <DuiTable :columns="columns" :rows="clients" class="mt-2">
-                    <template #name="{ row }">
+                    <template #name="client">
                         <div>
-                            <span class="font-medium text-white">{{ row.name }}</span>
-                            <div v-if="row.secret" class="text-xs text-slate-400 font-mono mt-0.5 truncate max-w-48">
-                                ID: {{ row.id.substring(0, 8) }}…
+                            <span class="font-medium text-white">{{ client.name }}</span>
+                            <div v-if="client.secret" class="text-xs text-slate-400 font-mono mt-0.5 truncate max-w-48">
+                                ID: {{ client.id.substring(0, 8) }}…
                             </div>
                         </div>
                     </template>
 
-                    <template #grant_type="{ row }">
-                        <DuiBadge v-if="row.grant_types?.includes('authorization_code')" color="primary" variant="outline">
+                    <template #grant_type="client">
+                        <DuiBadge v-if="client.grant_types?.includes('authorization_code')" color="primary" variant="outline">
                             Auth Code
                         </DuiBadge>
-                        <DuiBadge v-else-if="row.grant_types?.includes('client_credentials')" color="secondary" variant="outline">
+                        <DuiBadge v-else-if="client.grant_types?.includes('client_credentials')" color="secondary" variant="outline">
                             Client Creds
                         </DuiBadge>
-                        <span v-else class="text-slate-500 text-sm">{{ grantLabel(row.grant_types) }}</span>
+                        <span v-else class="text-slate-500 text-sm">{{ grantLabel(client.grant_types) }}</span>
                     </template>
 
-                    <template #redirect_uris="{ row }">
-                        <div v-if="row.redirect_uris?.length" class="space-y-1">
-                            <div v-for="uri in row.redirect_uris" :key="uri" class="text-xs text-slate-400 font-mono truncate max-w-64">
+                    <template #redirect_uris="client">
+                        <div v-if="client.redirect_uris?.length" class="space-y-1">
+                            <div v-for="uri in client.redirect_uris" :key="uri" class="text-xs text-slate-400 font-mono truncate max-w-64">
                                 {{ uri }}
                             </div>
                         </div>
                         <span v-else class="text-slate-500 text-sm">—</span>
                     </template>
 
-                    <template #created_at="{ row }">
-                        <span class="text-sm text-slate-400">{{ row.created_at.substring(0, 10) }}</span>
+                    <template #created_at="client">
+                        <span class="text-sm text-slate-400">{{ client.created_at.substring(0, 10) }}</span>
                     </template>
 
-                    <template #actions="{ row }">
+                    <template #actions="client">
                         <div class="flex items-center gap-2">
-                            <DuiButton size="sm" variant="ghost" color="neutral" @click="startEdit(row)">
+                            <DuiButton size="sm" variant="ghost" color="neutral" @click="startEdit(client)">
                                 Editar
                             </DuiButton>
-                            <DuiButton size="sm" variant="ghost" color="warning" @click="regeneratingClient = row">
+                            <DuiButton size="sm" variant="ghost" color="warning" @click="regeneratingClient = client; showRegenerateModal = true">
                                 Regenerar secret
                             </DuiButton>
-                            <DuiButton size="sm" variant="ghost" color="danger" @click="confirmDelete(row)">
+                            <DuiButton size="sm" variant="ghost" color="danger" @click="confirmDelete(client)">
                                 Revocar
                             </DuiButton>
                         </div>
@@ -251,97 +258,97 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
         </div>
 
         <!-- Modal: Editar cliente -->
-        <Modal :show="!!editingClient" @close="cancelEdit">
-            <div class="p-6 space-y-5">
-                <h2 class="text-lg font-semibold text-gray-900">Editar cliente</h2>
+        <DuiModal v-model="showEditModal" title="Editar cliente" @close="cancelEdit">
+            <form @submit.prevent="submitEdit" class="space-y-4">
+                <DuiLabel title="Nombre" required :error="editForm.errors.name">
+                    <DuiInput v-model="editForm.name" required />
+                </DuiLabel>
 
-                <form @submit.prevent="submitEdit" class="space-y-4">
-                    <DuiLabel title="Nombre" required :error="editForm.errors.name">
-                        <DuiInput v-model="editForm.name" required />
-                    </DuiLabel>
+                <DuiLabel
+                    v-if="editNeedsRedirect"
+                    title="URIs de redirección"
+                    help-text="Una URI por línea"
+                    :error="editForm.errors.redirect_uris"
+                >
+                    <DuiTextarea
+                        v-model="editForm.redirect_uris"
+                        :autoheight="false"
+                        resize="none"
+                        rows="3"
+                    />
+                </DuiLabel>
+            </form>
 
-                    <DuiLabel
-                        v-if="editNeedsRedirect"
-                        title="URIs de redirección"
-                        help-text="Una URI por línea"
-                        :error="editForm.errors.redirect_uris"
-                    >
-                        <DuiTextarea
-                            v-model="editForm.redirect_uris"
-                            :autoheight="false"
-                            resize="none"
-                            rows="3"
-                        />
-                    </DuiLabel>
-
-                    <div class="flex justify-end gap-3 pt-2">
-                        <DuiButton type="button" variant="outline" color="neutral" @click="cancelEdit">
-                            Cancelar
-                        </DuiButton>
-                        <DuiButton type="submit" color="primary" :loading="editForm.processing">
-                            Guardar cambios
-                        </DuiButton>
-                    </div>
-                </form>
-            </div>
-        </Modal>
+            <template #footer>
+                <div class="flex justify-end gap-3">
+                    <DuiButton type="button" variant="outline" color="neutral" @click="cancelEdit">
+                        Cancelar
+                    </DuiButton>
+                    <DuiButton color="primary" :loading="editForm.processing" @click="submitEdit">
+                        Guardar cambios
+                    </DuiButton>
+                </div>
+            </template>
+        </DuiModal>
 
         <!-- Modal: Confirmar regenerar secret -->
-        <Modal :show="!!regeneratingClient" @close="regeneratingClient = null">
-            <div class="p-6 space-y-5">
-                <h2 class="text-lg font-semibold text-gray-900">Regenerar client secret</h2>
+        <DuiModal v-model="showRegenerateModal" title="Regenerar client secret" color="warning" @close="regeneratingClient = null">
+            <div class="space-y-4">
                 <DuiAlert color="warning">
                     El secret actual dejará de funcionar de inmediato. Actualiza tus aplicaciones con el nuevo secret.
                 </DuiAlert>
-                <p class="text-sm text-gray-600">
+                <p class="text-sm">
                     ¿Confirmas que quieres regenerar el secret de <strong>{{ regeneratingClient?.name }}</strong>?
                 </p>
+            </div>
+
+            <template #footer>
                 <div class="flex justify-end gap-3">
-                    <DuiButton variant="outline" color="neutral" @click="regeneratingClient = null">
+                    <DuiButton variant="outline" color="neutral" @click="showRegenerateModal = false; regeneratingClient = null">
                         Cancelar
                     </DuiButton>
                     <DuiButton color="warning" @click="regenerateSecret(regeneratingClient)">
                         Sí, regenerar secret
                     </DuiButton>
                 </div>
-            </div>
-        </Modal>
+            </template>
+        </DuiModal>
 
         <!-- Modal: Confirmar revocar -->
-        <Modal :show="!!deletingClient" @close="deletingClient = null">
-            <div class="p-6 space-y-5">
-                <h2 class="text-lg font-semibold text-gray-900">Revocar cliente</h2>
+        <DuiModal v-model="showDeleteModal" title="Revocar cliente" color="danger" @close="deletingClient = null">
+            <div class="space-y-4">
                 <DuiAlert color="danger">
                     Las aplicaciones que usen este cliente perderán acceso inmediatamente.
                 </DuiAlert>
-                <p class="text-sm text-gray-600">
+                <p class="text-sm">
                     ¿Confirmas que quieres revocar <strong>{{ deletingClient?.name }}</strong>?
                 </p>
+            </div>
+
+            <template #footer>
                 <div class="flex justify-end gap-3">
-                    <DuiButton variant="outline" color="neutral" @click="deletingClient = null">
+                    <DuiButton variant="outline" color="neutral" @click="showDeleteModal = false; deletingClient = null">
                         Cancelar
                     </DuiButton>
                     <DuiButton color="danger" :loading="deleteForm.processing" @click="submitDelete">
                         Revocar cliente
                     </DuiButton>
                 </div>
-            </div>
-        </Modal>
+            </template>
+        </DuiModal>
 
         <!-- Modal: Mostrar nuevo secret (solo una vez) -->
-        <Modal :show="secretModal" :closeable="false">
-            <div class="p-6 space-y-5">
-                <h2 class="text-lg font-semibold text-gray-900">
-                    Secret de "{{ flashClient }}"
-                </h2>
+        <DuiModal v-model="secretModal" :title="`Secret de &quot;${flashClient}&quot;`" :show-close="false" :close-on-backdrop="false" :close-on-esc="false">
+            <div class="space-y-4">
                 <DuiAlert color="warning">
                     Este secret solo se muestra una vez. Cópialo ahora y guárdalo en un lugar seguro.
                 </DuiAlert>
-
                 <div class="bg-slate-900 rounded-lg p-4 font-mono text-sm text-green-400 break-all select-all">
                     {{ flashSecret }}
                 </div>
+            </div>
 
+            <template #footer>
                 <div class="flex justify-end gap-3">
                     <DuiButton variant="outline" color="neutral" @click="copySecret">
                         {{ copiedSecret ? '¡Copiado!' : 'Copiar al portapapeles' }}
@@ -350,7 +357,7 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
                         Entendido, ya lo guardé
                     </DuiButton>
                 </div>
-            </div>
-        </Modal>
+            </template>
+        </DuiModal>
     </AuthenticatedLayout>
 </template>
