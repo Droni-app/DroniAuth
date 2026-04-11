@@ -12,11 +12,13 @@ const navItems = computed(() => [
         label: 'Dashboard',
         to: route('dashboard'),
         active: route().current('dashboard'),
+        icon: 'mdi mdi-view-dashboard-outline',
     },
     {
         label: 'Clientes OAuth',
         to: route('clients.index'),
         active: route().current('clients.*'),
+        icon: 'mdi mdi-apps',
     },
 ]);
 </script>
@@ -25,8 +27,8 @@ const navItems = computed(() => [
     <div class="min-h-screen bg-gradient-to-br from-slate-100 via-slate-200 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         <DuiNavbar :items="navItems">
             <template #brand>
-                <Link :href="route('dashboard')" class="text-white font-bold text-lg tracking-tight">
-                    DroniAuth
+                <Link :href="route('dashboard')">
+                    <img :src="isDark ? '/img/logo-w.svg' : '/img/logo.svg'" alt="DroniAuth" class="h-7" />
                 </Link>
             </template>
             <template #actions>
@@ -40,11 +42,13 @@ const navItems = computed(() => [
                     </button>
                     <Link :href="route('profile.edit')">
                         <DuiButton variant="ghost" size="sm" color="neutral">
+                            <i class="mdi mdi-account-circle-outline mr-1"></i>
                             {{ user.name }}
                         </DuiButton>
                     </Link>
                     <Link :href="route('logout')" method="post" as="button">
                         <DuiButton variant="outline" size="sm" color="danger">
+                            <i class="mdi mdi-logout mr-1"></i>
                             Salir
                         </DuiButton>
                     </Link>
