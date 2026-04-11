@@ -6,6 +6,27 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.
 
 ---
 
+## [Sin versión] - 2026-04-11 (4)
+
+### Agregado
+- Página **Legal** (`/legal`) con Política de privacidad, Protección de datos personales y Uso de cookies:
+  - `LegalController` con método `index` que renderiza la vista Inertia
+  - `Legal.vue` usando `GuestLayout`
+  - Ruta pública `GET /legal` registrada en `web.php`
+- **Footer** con copyright y enlace a `/legal` en `AuthenticatedLayout` y `GuestLayout`
+- Paquete **`@tailwindcss/typography`** agregado a dependencias
+- Assets de imagen: logos (`logo.svg`, `logo.png`, `logo-w.svg`, `logo-w.png`), brand (`brand.svg`, `brand.png`, `brand-w.svg`), imágenes para home y demo, nuevo `favicon.ico`
+
+### Cambiado
+- **`GuestLayout.vue`:** fondo adaptado a dark/light mode con variantes `dark:`; el texto "DroniAuth" reemplazado por la imagen `brand.svg` / `brand-w.svg` según el tema activo (usa `useTheme`)
+- **`AuthenticatedLayout.vue`:** ítem de navegación "Clientes OAuth" renombrado a "Aplicaciones"
+- **`SocialiteController`:** lógica de `callback` mejorada — busca usuario por `email` o `google_id` antes de crear uno nuevo, evitando duplicados cuando el usuario ya existe con contraseña
+
+### Corregido
+- Duplicación de cuentas al hacer login con Google si el usuario ya tenía cuenta con email/contraseña
+
+---
+
 ## [Sin versión] - 2026-04-11 (3)
 
 ### Agregado

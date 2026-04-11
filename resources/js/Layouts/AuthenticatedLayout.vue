@@ -15,7 +15,7 @@ const navItems = computed(() => [
         icon: 'mdi mdi-view-dashboard-outline',
     },
     {
-        label: 'Clientes OAuth',
+        label: 'Aplicaciones',
         to: route('clients.index'),
         active: route().current('clients.*'),
         icon: 'mdi mdi-apps',
@@ -59,5 +59,11 @@ const navItems = computed(() => [
         <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
             <slot />
         </main>
+
+        <footer class="mt-auto py-6 text-center text-xs text-slate-400">
+            &copy; 2025 Construido con trabajo duro y mucho café por el equipo de
+            <a href="https://droni.co" target="_blank" class="hover:text-white transition-colors">Droni.co</a>.
+            <a href="/legal" class="ml-1 hover:text-white transition-colors">Legal</a>
+        </footer>
     </div>
 </template>

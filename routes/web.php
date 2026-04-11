@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\LegalController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SocialiteController;
 use Illuminate\Foundation\Application;
@@ -32,6 +33,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/clients/{client}/secret', [ClientController::class, 'regenerateSecret'])->name('clients.regenerate-secret');
     Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
 });
+
+Route::get('/legal', [LegalController::class, 'index'])->name('legal');
 
 // Google OAuth
 Route::get('/auth/google', [SocialiteController::class, 'redirect'])->name('auth.google');
