@@ -1,0 +1,31 @@
+# Changelog
+
+Todos los cambios relevantes del proyecto DroniAuth se documentan en este archivo.
+
+El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
+
+---
+
+## [Sin versión] - 2026-04-11
+
+### Agregado
+- Trait `HasUuids` en el modelo `User` para generación automática de UUIDs
+- Soporte a `DuiCheckbox` en formulario de login (`remember me`) y en el formulario de creación de clientes OAuth (`confidencial`)
+- Componente `DuiModal` reemplaza el `Modal` de Laravel Breeze en todos los diálogos:
+  - Modal de edición de cliente
+  - Modal de confirmación de regeneración de secret
+  - Modal de confirmación de revocación de cliente
+  - Modal de visualización de nuevo client secret (no closeable)
+  - Modal de confirmación de eliminación de cuenta
+
+### Cambiado
+- **Migraciones:** columnas `user_id` de tipo `bigint` migradas a `uuid` en las tablas `users`, `sessions`, `oauth_access_tokens`, `oauth_auth_codes` y `oauth_device_codes`
+- **Migración `oauth_clients`:** relación polimórfica `owner` cambiada de `nullableMorphs` a `nullableUuidMorphs` para compatibilidad con UUIDs
+- **`ClientController`:** reemplazados los métodos deprecados `ClientRepository::forUser()` y `findForUser()` por `$user->oauthApps()`, que usa la relación polimórfica `owner` correcta de Passport v13 (el método `clients()` seguía apuntando a la columna inexistente `user_id`)
+- **`Clients/Index.vue`:** corregida la sintaxis de slots de `DuiTable` — el componente pasa las propiedades del row directamente al slot (`{ id, name, ... }`), no envueltas en `{ row }`, lo que causaba que las filas renderizaran vacías
+- **`@dronico/droni-kit`:** actualizado de `1.13.x` → `1.14.0` (agrega `DuiCheckbox`) → `1.15.0` (agrega `DuiModal`)
+
+### Corregido
+- `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'oauth_clients.user_id'` — causado por el método `clients()` deprecado de Passport v13 que aún referenciaba `user_id`
+- `SQLSTATE[01000]: Warning: 1265 Data truncated for column 'owner_id'` — causado por `nullableMorphs('owner')` que creaba `owner_id` como `unsignedBigInteger`, incompatible con UUIDs
+- Los clientes OAuth no se listaban en la UI a pesar de existir en la base de datos, debido al error silencioso en los slots de `DuiTable`
