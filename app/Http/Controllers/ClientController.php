@@ -12,7 +12,7 @@ class ClientController extends Controller
 
     public function index(Request $request)
     {
-        $clients = $this->clients->forUser($request->user())
+        $clients = $request->user()->oauthApps()->where('revoked', false)->orderBy('name')->get()
             ->map(fn ($client) => [
                 'id'            => $client->id,
                 'name'          => $client->name,
@@ -69,7 +69,7 @@ class ClientController extends Controller
 
     public function update(Request $request, string $id)
     {
-        $client = $this->clients->findForUser($id, $request->user());
+        $client = $request->user()->oauthApps()->where('revoked', false)->find($id);
 
         abort_unless($client, 404);
 
@@ -89,7 +89,7 @@ class ClientController extends Controller
 
     public function regenerateSecret(Request $request, string $id)
     {
-        $client = $this->clients->findForUser($id, $request->user());
+        $client = $request->user()->oauthApps()->where('revoked', false)->find($id);
 
         abort_unless($client, 404);
 
@@ -104,7 +104,7 @@ class ClientController extends Controller
 
     public function destroy(Request $request, string $id)
     {
-        $client = $this->clients->findForUser($id, $request->user());
+        $client = $request->user()->oauthApps()->where('revoked', false)->find($id);
 
         abort_unless($client, 404);
 
