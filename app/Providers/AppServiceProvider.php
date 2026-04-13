@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Inertia\Inertia;
 use Laravel\Passport\Passport;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        Passport::authorizationView(fn ($params) => Inertia::render('OAuth/Authorize', $params));
 
         // OAuth2 scopes disponibles para los clientes del ecosistema Droni
         Passport::tokensCan([

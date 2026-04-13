@@ -7,7 +7,23 @@ const props = defineProps({
     clients: Array,
     flashSecret: String,
     flashClient: String,
+    oauthEndpoints: Object,
 });
+
+const copiedEndpoint = ref(null);
+const copiedClientId = ref(null);
+
+const copyEndpoint = (key, value) => {
+    navigator.clipboard.writeText(value);
+    copiedEndpoint.value = key;
+    setTimeout(() => copiedEndpoint.value = null, 2000);
+};
+
+const copyClientId = (id) => {
+    navigator.clipboard.writeText(id);
+    copiedClientId.value = id;
+    setTimeout(() => copiedClientId.value = null, 2000);
+};
 
 // ─── Estado de paneles ───────────────────────────────────────────────────────
 const showCreateForm       = ref(false);
@@ -135,6 +151,31 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
                 </DuiButton>
             </div>
 
+            <!-- Endpoints OAuth -->
+            <DuiCard title="Endpoints OAuth2">
+                <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div v-for="(url, key) in oauthEndpoints" :key="key" class="bg-slate-800 rounded-lg px-4 py-3 flex items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-xs text-slate-400 capitalize mb-0.5">
+                                {{ { authorize: 'Autorización', token: 'Token', revoke: 'Revocación', userinfo: 'Info de usuario' }[key] }}
+                            </p>
+                            <p class="text-sm font-mono text-slate-200 truncate">{{ url }}</p>
+                        </div>
+                        <DuiTooltip :text="copiedEndpoint === key ? '¡Copiado!' : 'Copiar'" placement="top" size="sm">
+                            <template #trigger>
+                                <button
+                                    type="button"
+                                    class="shrink-0 text-slate-400 hover:text-white transition-colors"
+                                    @click="copyEndpoint(key, url)"
+                                >
+                                    <i :class="copiedEndpoint === key ? 'mdi mdi-check text-green-400' : 'mdi mdi-content-copy'" class="text-base" />
+                                </button>
+                            </template>
+                        </DuiTooltip>
+                    </div>
+                </div>
+            </DuiCard>
+
             <!-- Formulario de creación -->
             <Transition
                 enter-active-class="transition duration-200 ease-out"
@@ -204,8 +245,19 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
                     <template #name="client">
                         <div>
                             <span class="font-medium text-white">{{ client.name }}</span>
-                            <div v-if="client.secret" class="text-xs text-slate-400 font-mono mt-0.5 truncate max-w-48">
-                                ID: {{ client.id.substring(0, 8) }}…
+                            <div class="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1">
+                                <span>{{ client.id }}</span>
+                                <DuiTooltip :text="copiedClientId === client.id ? '¡Copiado!' : 'Copiar ID'" placement="top" size="sm">
+                                    <template #trigger>
+                                        <button
+                                            type="button"
+                                            class="text-slate-500 hover:text-white transition-colors"
+                                            @click="copyClientId(client.id)"
+                                        >
+                                            <i :class="copiedClientId === client.id ? 'mdi mdi-check text-green-400' : 'mdi mdi-content-copy'" />
+                                        </button>
+                                    </template>
+                                </DuiTooltip>
                             </div>
                         </div>
                     </template>
@@ -234,16 +286,28 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
                     </template>
 
                     <template #actions="client">
-                        <div class="flex items-center gap-2">
-                            <DuiButton size="sm" variant="ghost" color="neutral" @click="startEdit(client)">
-                                Editar
-                            </DuiButton>
-                            <DuiButton size="sm" variant="ghost" color="warning" @click="regeneratingClient = client; showRegenerateModal = true">
-                                Regenerar secret
-                            </DuiButton>
-                            <DuiButton size="sm" variant="ghost" color="danger" @click="confirmDelete(client)">
-                                Revocar
-                            </DuiButton>
+                        <div class="flex items-center gap-1">
+                            <DuiTooltip text="Editar" placement="top" size="sm">
+                                <template #trigger>
+                                    <DuiButton size="sm" variant="ghost" color="neutral" @click="startEdit(client)">
+                                        <i class="mdi mdi-pencil-outline text-base" />
+                                    </DuiButton>
+                                </template>
+                            </DuiTooltip>
+                            <DuiTooltip text="Regenerar secret" placement="top" size="sm">
+                                <template #trigger>
+                                    <DuiButton size="sm" variant="ghost" color="warning" @click="regeneratingClient = client; showRegenerateModal = true">
+                                        <i class="mdi mdi-refresh text-base" />
+                                    </DuiButton>
+                                </template>
+                            </DuiTooltip>
+                            <DuiTooltip text="Revocar" placement="top" size="sm">
+                                <template #trigger>
+                                    <DuiButton size="sm" variant="ghost" color="danger" @click="confirmDelete(client)">
+                                        <i class="mdi mdi-delete-outline text-base" />
+                                    </DuiButton>
+                                </template>
+                            </DuiTooltip>
                         </div>
                     </template>
                 </DuiTable>
@@ -343,8 +407,19 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
                 <DuiAlert color="warning">
                     Este secret solo se muestra una vez. Cópialo ahora y guárdalo en un lugar seguro.
                 </DuiAlert>
-                <div class="bg-slate-900 rounded-lg p-4 font-mono text-sm text-green-400 break-all select-all">
-                    {{ flashSecret }}
+                <div class="bg-slate-900 rounded-lg p-4 font-mono text-sm text-green-400 break-all select-all flex items-center justify-between gap-3">
+                    <span>{{ flashSecret }}</span>
+                    <DuiTooltip :text="copiedSecret ? '¡Copiado!' : 'Copiar'" placement="top" size="sm">
+                        <template #trigger>
+                            <button
+                                type="button"
+                                class="shrink-0 text-slate-400 hover:text-white transition-colors"
+                                @click="copySecret"
+                            >
+                                <i :class="copiedSecret ? 'mdi mdi-check text-green-400' : 'mdi mdi-content-copy'" class="text-base" />
+                            </button>
+                        </template>
+                    </DuiTooltip>
                 </div>
             </div>
 

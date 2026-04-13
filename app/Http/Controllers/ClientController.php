@@ -23,10 +23,18 @@ class ClientController extends Controller
                 'created_at'    => $client->created_at->toDateTimeString(),
             ]);
 
+        $baseUrl = rtrim(config('app.url'), '/');
+
         return Inertia::render('Clients/Index', [
             'clients'     => $clients,
             'flashSecret' => session('new_client_secret'),
             'flashClient' => session('new_client_name'),
+            'oauthEndpoints' => [
+                'authorize' => $baseUrl . '/oauth/authorize',
+                'token'     => $baseUrl . '/oauth/token',
+                'revoke'    => $baseUrl . '/oauth/tokens/{token_id}',
+                'userinfo'  => $baseUrl . '/api/user',
+            ],
         ]);
     }
 
@@ -63,7 +71,7 @@ class ClientController extends Controller
         }
 
         return redirect()->route('clients.index')
-            ->with('new_client_secret', $client->secret)
+            ->with('new_client_secret', $client->plainSecret)
             ->with('new_client_name', $client->name);
     }
 
@@ -95,10 +103,10 @@ class ClientController extends Controller
 
         $this->clients->regenerateSecret($client);
 
-        $client->refresh();
+        $plainSecret = $client->plainSecret;
 
         return redirect()->route('clients.index')
-            ->with('new_client_secret', $client->secret)
+            ->with('new_client_secret', $plainSecret)
             ->with('new_client_name', $client->name);
     }
 
