@@ -15,6 +15,9 @@ concurrency:
 
 env:
   IMAGE_NAME: droniauth
+  ACR_NAME: droniacrshared01
+  ACR_LOGIN_SERVER: droniacrshared01.azurecr.io
+  APP_NAME: droni-auth
 
 jobs:
   build-and-deploy:
@@ -30,20 +33,13 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Login to Azure Container Registry (RBAC)
-        run: |
-          ACR_NAME="${{ vars.ACR_NAME }}"
-          if [ -z "$ACR_NAME" ]; then
-            ACR_NAME="${{ vars.ACR_LOGIN_SERVER }}"
-            ACR_NAME="${ACR_NAME%%.*}"
-          fi
-
-          az acr login --name "$ACR_NAME"
+        run: az acr login --name ${{ env.ACR_NAME }}
 
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}
           tags: |
             type=sha,format=short,prefix=
             type=raw,value=latest
@@ -60,5 +56,5 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: droni-auth
-          images: ${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+          app-name: ${{ env.APP_NAME }}
+          images: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
