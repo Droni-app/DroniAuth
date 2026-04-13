@@ -56,3 +56,54 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Deploy to Azure App Service (Docker)
+
+This repository includes a GitHub Actions workflow at `.github/workflows/azure-appservice-docker.yml` that builds a Docker image, pushes it to Azure Container Registry (ACR), and deploys it to Azure App Service.
+
+### 1. GitHub repository variables
+
+Create these Variables in your GitHub repository (`Settings > Secrets and variables > Actions > Variables`):
+
+- `AZURE_WEBAPP_NAME`: Azure App Service name.
+- `ACR_LOGIN_SERVER`: ACR login server, for example `myregistry.azurecr.io`.
+- `ACR_NAME` (optional): ACR resource name, for example `myregistry`.
+
+### 2. GitHub repository secrets
+
+Create these Secrets in your GitHub repository (`Settings > Secrets and variables > Actions > Secrets`):
+
+- `AZURE_CREDENTIALS`: Service principal JSON generated with `az ad sp create-for-rbac`.
+
+With RBAC authentication, `ACR_USERNAME` and `ACR_PASSWORD` are not required.
+
+### 3. Required RBAC roles
+
+The service principal used in `AZURE_CREDENTIALS` must have:
+
+- `Website Contributor` (or equivalent) on the target App Service scope.
+- `AcrPush` on the target ACR scope.
+
+Example role assignment for ACR:
+
+```bash
+az role assignment create \
+	--assignee <CLIENT_ID_FROM_AZURE_CREDENTIALS> \
+	--role AcrPush \
+	--scope /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RG>/providers/Microsoft.ContainerRegistry/registries/<ACR_NAME>
+```
+
+### 4. Azure App Service settings
+
+In your App Service, configure:
+
+- `WEBSITES_PORT=80`
+- Laravel runtime settings (`APP_ENV`, `APP_KEY`, `APP_DEBUG`, `APP_URL`, `DB_*`, etc.) as Application Settings.
+
+### 5. Trigger deployment
+
+Push to `main` (or run the workflow manually from the Actions tab). The workflow will:
+
+1. Build the Docker image from `Dockerfile`.
+2. Push image tags `latest` and commit `sha` to ACR.
+3. Update your Web App to use the `latest` image.
