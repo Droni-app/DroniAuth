@@ -1,16 +1,5 @@
 # syntax=docker/dockerfile:1
 
-FROM node:24-bookworm-slim AS frontend-builder
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci
-
-COPY resources ./resources
-COPY public ./public
-COPY vite.config.js postcss.config.js tailwind.config.js jsconfig.json ./
-RUN npm run build
-
 FROM composer:2 AS vendor-builder
 WORKDIR /app
 
@@ -21,6 +10,18 @@ RUN composer install \
     --prefer-dist \
     --optimize-autoloader \
     --no-scripts
+
+FROM node:24-bookworm-slim AS frontend-builder
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY resources ./resources
+COPY public ./public
+COPY vite.config.js postcss.config.js tailwind.config.js jsconfig.json ./
+COPY --from=vendor-builder /app/vendor ./vendor
+RUN npm run build
 
 FROM php:8.3-apache AS app
 WORKDIR /var/www/html
