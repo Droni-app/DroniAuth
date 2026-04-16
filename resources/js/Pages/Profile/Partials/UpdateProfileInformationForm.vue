@@ -47,7 +47,7 @@ const form = useForm({
             </DuiAlert>
         </div>
 
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 mt-2">
             <DuiButton type="submit" color="primary" :loading="form.processing" :disabled="form.processing">
                 Guardar cambios
             </DuiButton>

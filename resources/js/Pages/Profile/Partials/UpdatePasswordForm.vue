@@ -63,7 +63,7 @@ const updatePassword = () => {
             />
         </DuiLabel>
 
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 mt-2">
             <DuiButton type="submit" color="primary" :loading="form.processing" :disabled="form.processing">
                 Actualizar contraseña
             </DuiButton>

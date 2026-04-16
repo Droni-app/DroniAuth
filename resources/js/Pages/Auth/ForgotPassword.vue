@@ -37,6 +37,7 @@ const submit = () => form.post(route('password.email'));
                 type="submit"
                 color="primary"
                 block
+                class="mt-2"
                 :loading="form.processing"
                 :disabled="form.processing"
             >

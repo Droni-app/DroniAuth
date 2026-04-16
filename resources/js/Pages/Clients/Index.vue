@@ -141,7 +141,7 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
             <!-- Header -->
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-white">Clientes OAuth2</h1>
+                    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Clientes OAuth2</h1>
                     <p class="text-slate-400 text-sm mt-1">
                         Gestiona las aplicaciones que se autentican a través de DroniAuth.
                     </p>
@@ -244,7 +244,7 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
                 <DuiTable :columns="columns" :rows="clients" class="mt-2">
                     <template #name="client">
                         <div>
-                            <span class="font-medium text-white">{{ client.name }}</span>
+                            <span class="font-medium text-slate-900 dark:text-white">{{ client.name }}</span>
                             <div class="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1">
                                 <span>{{ client.id }}</span>
                                 <DuiTooltip :text="copiedClientId === client.id ? '¡Copiado!' : 'Copiar ID'" placement="top" size="sm">

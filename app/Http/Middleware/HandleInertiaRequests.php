@@ -32,7 +32,10 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user() ? array_merge(
+                    $request->user()->toArray(),
+                    ['two_factor_enabled' => $request->user()->hasEnabledTwoFactorAuthentication()]
+                ) : null,
             ],
             'csrf_token' => csrf_token(),
         ];

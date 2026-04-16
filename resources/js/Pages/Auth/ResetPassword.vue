@@ -60,6 +60,7 @@ const submit = () => {
                 type="submit"
                 color="primary"
                 block
+                class="mt-2"
                 :loading="form.processing"
                 :disabled="form.processing"
             >
