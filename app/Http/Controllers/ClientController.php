@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Laravel\Passport\ClientRepository;
@@ -16,6 +17,8 @@ class ClientController extends Controller
             ->map(fn ($client) => [
                 'id'            => $client->id,
                 'name'          => $client->name,
+                'logo'          => $client->logo,
+                'icon'          => $client->icon,
                 'secret'        => $client->secret,
                 'redirect_uris' => $client->redirect_uris ?? [],
                 'grant_types'   => $client->grant_types ?? [],
@@ -38,6 +41,44 @@ class ClientController extends Controller
         ]);
     }
 
+    public function show(Request $request, string $id)
+    {
+        $client = $request->user()->oauthApps()->where('revoked', false)->find($id);
+
+        abort_unless($client, 404);
+
+        $authorizedUsers = User::whereHas('tokens', function ($q) use ($id) {
+            $q->where('client_id', $id)->where('revoked', false);
+        })
+        ->with(['tokens' => function ($q) use ($id) {
+            $q->where('client_id', $id)->where('revoked', false)->latest('created_at');
+        }])
+        ->orderBy('name')
+        ->get()
+        ->map(fn ($user) => [
+            'id'         => $user->id,
+            'name'       => $user->name,
+            'email'      => $user->email,
+            'avatar'     => $user->avatar,
+            'scopes'     => $user->tokens->first()?->scopes ?? [],
+            'authorized_at' => $user->tokens->first()?->created_at->toDateTimeString(),
+            'expires_at' => $user->tokens->first()?->expires_at?->toDateTimeString(),
+        ]);
+
+        return Inertia::render('Clients/Show', [
+            'client' => [
+                'id'            => $client->id,
+                'name'          => $client->name,
+                'logo'          => $client->logo,
+                'icon'          => $client->icon,
+                'grant_types'   => $client->grant_types ?? [],
+                'redirect_uris' => $client->redirect_uris ?? [],
+                'created_at'    => $client->created_at->toDateTimeString(),
+            ],
+            'authorizedUsers' => $authorizedUsers,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -45,6 +86,8 @@ class ClientController extends Controller
             'grant_type'    => 'required|in:authorization_code,client_credentials',
             'redirect_uris' => 'required_if:grant_type,authorization_code|nullable|string',
             'confidential'  => 'boolean',
+            'logo'          => 'nullable|url|max:2048',
+            'icon'          => 'nullable|url|max:2048',
         ]);
 
         $redirectUris = array_filter(
@@ -70,6 +113,10 @@ class ClientController extends Controller
             $client->save();
         }
 
+        $client->logo = $data['logo'] ?? null;
+        $client->icon = $data['icon'] ?? null;
+        $client->save();
+
         return redirect()->route('clients.index')
             ->with('new_client_secret', $client->plainSecret)
             ->with('new_client_name', $client->name);
@@ -84,6 +131,8 @@ class ClientController extends Controller
         $data = $request->validate([
             'name'          => 'required|string|max:255',
             'redirect_uris' => 'nullable|string',
+            'logo'          => 'nullable|url|max:2048',
+            'icon'          => 'nullable|url|max:2048',
         ]);
 
         $redirectUris = array_filter(
@@ -91,6 +140,10 @@ class ClientController extends Controller
         );
 
         $this->clients->update($client, $data['name'], array_values($redirectUris));
+
+        $client->logo = $data['logo'] ?? null;
+        $client->icon = $data['icon'] ?? null;
+        $client->save();
 
         return redirect()->route('clients.index');
     }

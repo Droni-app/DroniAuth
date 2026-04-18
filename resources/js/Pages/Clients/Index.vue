@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, useForm, router } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
 const props = defineProps({
@@ -42,6 +42,8 @@ const createForm = useForm({
     grant_type:    'authorization_code',
     redirect_uris: '',
     confidential:  true,
+    logo:          '',
+    icon:          '',
 });
 
 const submitCreate = () => {
@@ -58,12 +60,16 @@ const submitCreate = () => {
 const editForm = useForm({
     name:          '',
     redirect_uris: '',
+    logo:          '',
+    icon:          '',
 });
 
 const startEdit = (client) => {
     editingClient.value = client;
     editForm.name = client.name;
     editForm.redirect_uris = (client.redirect_uris ?? []).join('\n');
+    editForm.logo = client.logo ?? '';
+    editForm.icon = client.icon ?? '';
     showEditModal.value = true;
 };
 
@@ -206,6 +212,15 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
                             </DuiLabel>
                         </div>
 
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <DuiLabel title="URL del logo" help-text="Imagen rectangular (ej. 200×60px)" :error="createForm.errors.logo">
+                                <DuiInput v-model="createForm.logo" placeholder="https://miapp.com/logo.png" type="url" />
+                            </DuiLabel>
+                            <DuiLabel title="URL del icono" help-text="Imagen cuadrada (ej. 64×64px)" :error="createForm.errors.icon">
+                                <DuiInput v-model="createForm.icon" placeholder="https://miapp.com/icon.png" type="url" />
+                            </DuiLabel>
+                        </div>
+
                         <DuiLabel
                             v-if="needsRedirect"
                             title="URIs de redirección"
@@ -243,8 +258,15 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
             <DuiCard v-if="clients.length > 0">
                 <DuiTable :columns="columns" :rows="clients" class="mt-2">
                     <template #name="client">
-                        <div>
-                            <span class="font-medium text-slate-900 dark:text-white">{{ client.name }}</span>
+                        <div class="flex items-center gap-3">
+                            <Link :href="route('clients.show', client.id)" class="shrink-0">
+                                <img v-if="client.icon" :src="client.icon" :alt="client.name" class="w-8 h-8 rounded object-contain bg-slate-100 dark:bg-slate-800 hover:opacity-80 transition-opacity" />
+                                <i v-else class="mdi mdi-application-outline text-2xl text-slate-500 hover:text-white transition-colors" />
+                            </Link>
+                            <div>
+                            <Link :href="route('clients.show', client.id)" class="font-medium text-slate-900 dark:text-white hover:text-blue-400 transition-colors">
+                                {{ client.name }}
+                            </Link>
                             <div class="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1">
                                 <span>{{ client.id }}</span>
                                 <DuiTooltip :text="copiedClientId === client.id ? '¡Copiado!' : 'Copiar ID'" placement="top" size="sm">
@@ -258,6 +280,7 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
                                         </button>
                                     </template>
                                 </DuiTooltip>
+                            </div>
                             </div>
                         </div>
                     </template>
@@ -327,6 +350,15 @@ const editNeedsRedirect = computed(() => (editingClient.value?.grant_types ?? []
                 <DuiLabel title="Nombre" required :error="editForm.errors.name">
                     <DuiInput v-model="editForm.name" required />
                 </DuiLabel>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DuiLabel title="URL del logo" help-text="Imagen rectangular" :error="editForm.errors.logo">
+                        <DuiInput v-model="editForm.logo" placeholder="https://miapp.com/logo.png" type="url" />
+                    </DuiLabel>
+                    <DuiLabel title="URL del icono" help-text="Imagen cuadrada" :error="editForm.errors.icon">
+                        <DuiInput v-model="editForm.icon" placeholder="https://miapp.com/icon.png" type="url" />
+                    </DuiLabel>
+                </div>
 
                 <DuiLabel
                     v-if="editNeedsRedirect"

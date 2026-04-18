@@ -31,7 +31,6 @@ class SecurityHeaders
 
         // En desarrollo Vite levanta un servidor HMR en un puerto separado
         $viteServer = app()->isProduction() ? '' : ' http://127.0.0.1:5173 ws://127.0.0.1:5173';
-
         // Content Security Policy
         $csp = implode('; ', [
             "default-src 'self'",
@@ -44,7 +43,6 @@ class SecurityHeaders
             "connect-src 'self' https://cdn.jsdelivr.net{$viteServer}",
             "frame-ancestors 'self'",
             "base-uri 'self'",
-            "form-action 'self'",
             "object-src 'none'",
         ]);
 

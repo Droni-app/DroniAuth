@@ -41,9 +41,8 @@ const csrf = usePage().props.csrf_token;
                 </ul>
             </div>
 
-            <!-- Acciones -->
+            <!-- Acciones: formularios HTML nativos, sin JS de por medio -->
             <div class="flex gap-3 pt-2">
-                <!-- Denegar: DELETE /oauth/authorize -->
                 <form method="POST" action="/oauth/authorize" class="flex-1">
                     <input type="hidden" name="_token" :value="csrf" />
                     <input type="hidden" name="_method" value="DELETE" />
@@ -53,7 +52,6 @@ const csrf = usePage().props.csrf_token;
                     </DuiButton>
                 </form>
 
-                <!-- Aprobar: POST /oauth/authorize -->
                 <form method="POST" action="/oauth/authorize" class="flex-1">
                     <input type="hidden" name="_token" :value="csrf" />
                     <input type="hidden" name="auth_token" :value="authToken" />

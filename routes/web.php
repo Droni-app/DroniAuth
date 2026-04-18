@@ -25,6 +25,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // OAuth Clients
     Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
     Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
+    Route::get('/clients/{client}', [ClientController::class, 'show'])->name('clients.show');
     Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update');
     Route::post('/clients/{client}/secret', [ClientController::class, 'regenerateSecret'])->name('clients.regenerate-secret');
     Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');

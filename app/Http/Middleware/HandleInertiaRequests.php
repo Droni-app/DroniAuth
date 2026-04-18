@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Laravel\Passport\Client;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -27,6 +28,31 @@ class HandleInertiaRequests extends Middleware
      *
      * @return array<string, mixed>
      */
+    private function resolveOAuthClient(Request $request): ?array
+    {
+        // On /oauth/authorize the client_id is in the current query string
+        $clientId = $request->query('client_id');
+
+        // On login/register the user came from /oauth/authorize, stored as intended URL
+        if (!$clientId) {
+            $intended = $request->session()->get('url.intended', '');
+            parse_str(parse_url($intended, PHP_URL_QUERY) ?? '', $params);
+            $clientId = $params['client_id'] ?? null;
+        }
+
+        if (!$clientId) return null;
+
+        $client = Client::where('id', $clientId)->where('revoked', false)->first();
+
+        if (!$client) return null;
+
+        return [
+            'name' => $client->name,
+            'logo' => $client->logo,
+            'icon' => $client->icon,
+        ];
+    }
+
     public function share(Request $request): array
     {
         return [
@@ -38,6 +64,7 @@ class HandleInertiaRequests extends Middleware
                 ) : null,
             ],
             'csrf_token' => csrf_token(),
+            'oauth_client' => fn () => $this->resolveOAuthClient($request),
         ];
     }
 }
