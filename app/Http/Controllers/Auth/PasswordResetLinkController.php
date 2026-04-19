@@ -9,12 +9,18 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use OpenApi\Attributes as OA;
 
 class PasswordResetLinkController extends Controller
 {
-    /**
-     * Display the password reset link request view.
-     */
+    #[OA\Get(
+        path: '/forgot-password',
+        summary: 'Show forgot password page',
+        tags: ['Authentication'],
+        responses: [
+            new OA\Response(response: 200, description: 'Forgot password page (HTML/Inertia)'),
+        ]
+    )]
     public function create(): Response
     {
         return Inertia::render('Auth/ForgotPassword', [
@@ -22,11 +28,24 @@ class PasswordResetLinkController extends Controller
         ]);
     }
 
-    /**
-     * Handle an incoming password reset link request.
-     *
-     * @throws ValidationException
-     */
+    #[OA\Post(
+        path: '/forgot-password',
+        summary: 'Send password reset link to email',
+        tags: ['Authentication'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'user@example.com'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 302, description: 'Reset link sent – redirects back with status message'),
+            new OA\Response(response: 422, description: 'Email not found or validation error'),
+        ]
+    )]
     public function store(Request $request): RedirectResponse
     {
         $request->validate([

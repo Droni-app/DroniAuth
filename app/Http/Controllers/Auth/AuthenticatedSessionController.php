@@ -10,12 +10,18 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use OpenApi\Attributes as OA;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Display the login view.
-     */
+    #[OA\Get(
+        path: '/login',
+        summary: 'Show login page',
+        tags: ['Authentication'],
+        responses: [
+            new OA\Response(response: 200, description: 'Login page (HTML/Inertia)'),
+        ]
+    )]
     public function create(): Response
     {
         return Inertia::render('Auth/Login', [
@@ -24,9 +30,26 @@ class AuthenticatedSessionController extends Controller
         ]);
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
+    #[OA\Post(
+        path: '/login',
+        summary: 'Authenticate user and create session',
+        tags: ['Authentication'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email', 'password'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'user@example.com'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'secret'),
+                    new OA\Property(property: 'remember', type: 'boolean', example: false),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 302, description: 'Redirects to dashboard or two-factor challenge if 2FA is enabled'),
+            new OA\Response(response: 422, description: 'Invalid credentials or validation error'),
+        ]
+    )]
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
@@ -50,9 +73,15 @@ class AuthenticatedSessionController extends Controller
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
+    #[OA\Post(
+        path: '/logout',
+        summary: 'Invalidate session and log out',
+        security: [['sessionAuth' => []]],
+        tags: ['Authentication'],
+        responses: [
+            new OA\Response(response: 302, description: 'Redirects to /'),
+        ]
+    )]
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();

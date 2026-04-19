@@ -1,0 +1,1224 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "DroniAuth API",
+        "description": "OAuth 2.0 Authorization Server. Provides authentication, user management, and OAuth client management endpoints.",
+        "contact": {
+            "email": "dev@droni.co"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "https://auth.droni.co",
+            "description": "Production"
+        },
+        {
+            "url": "http://localhost",
+            "description": "Local development"
+        }
+    ],
+    "paths": {
+        "/login": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Show login page",
+                "operationId": "d38b0625602ec8e41c3bb98aa2e969de",
+                "responses": {
+                    "200": {
+                        "description": "Login page (HTML/Inertia)"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Authenticate user and create session",
+                "operationId": "42f77e072dec84b0e1094cca1228298e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "secret"
+                                    },
+                                    "remember": {
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Redirects to dashboard or two-factor challenge if 2FA is enabled"
+                    },
+                    "422": {
+                        "description": "Invalid credentials or validation error"
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Invalidate session and log out",
+                "operationId": "03afb12b342c2ea43bdc1de4f39e91a8",
+                "responses": {
+                    "302": {
+                        "description": "Redirects to /"
+                    }
+                },
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ]
+            }
+        },
+        "/reset-password/{token}": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Show password reset form",
+                "operationId": "139cbd7a33506f23db79a42dd3a1b825",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "email"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password reset form (HTML/Inertia)"
+                    }
+                }
+            }
+        },
+        "/reset-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Reset user password using token from email",
+                "operationId": "24b1c68468bf984b8806908f211f3827",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "description": "Reset token from email link",
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "minLength": 8
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Password reset – redirects to /login. All tokens for this user are revoked."
+                    },
+                    "422": {
+                        "description": "Invalid token, expired link, or weak password"
+                    }
+                }
+            }
+        },
+        "/forgot-password": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Show forgot password page",
+                "operationId": "488381143077833cec81be2e4235c339",
+                "responses": {
+                    "200": {
+                        "description": "Forgot password page (HTML/Inertia)"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Send password reset link to email",
+                "operationId": "888e4aa5b202b170b9fe831da90048c6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Reset link sent – redirects back with status message"
+                    },
+                    "422": {
+                        "description": "Email not found or validation error"
+                    }
+                }
+            }
+        },
+        "/register": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Show registration page",
+                "operationId": "711394cf638654593b284d884e4c5be4",
+                "responses": {
+                    "200": {
+                        "description": "Registration page (HTML/Inertia)"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a new user account",
+                "operationId": "573de1fed352c1205a32c4d1b9877375",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Jane Doe",
+                                        "maxLength": 255
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "jane@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "minLength": 8
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "minLength": 8
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "User created and logged in – redirects to email verification notice"
+                    },
+                    "422": {
+                        "description": "Validation error (duplicate email, weak password, etc.)"
+                    }
+                }
+            }
+        },
+        "/clients": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "List OAuth clients owned by the authenticated user",
+                "operationId": "af1f3794367a5e843bf15e3a9033d911",
+                "responses": {
+                    "200": {
+                        "description": "Client list with OAuth endpoint references",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "clients": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OAuthClient"
+                                            }
+                                        },
+                                        "oauthEndpoints": {
+                                            "properties": {
+                                                "authorize": {
+                                                    "type": "string",
+                                                    "example": "https://auth.droni.co/oauth/authorize"
+                                                },
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "https://auth.droni.co/oauth/token"
+                                                },
+                                                "revoke": {
+                                                    "type": "string",
+                                                    "example": "https://auth.droni.co/oauth/tokens/{token_id}"
+                                                },
+                                                "userinfo": {
+                                                    "type": "string",
+                                                    "example": "https://auth.droni.co/api/user"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Create a new OAuth client",
+                "operationId": "15981a5da120d8b4ea1b91b05a35622b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "grant_type"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "My App",
+                                        "maxLength": 255
+                                    },
+                                    "grant_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "authorization_code",
+                                            "client_credentials"
+                                        ]
+                                    },
+                                    "redirect_uris": {
+                                        "description": "Newline-separated redirect URIs",
+                                        "type": "string",
+                                        "example": "https://myapp.com/callback"
+                                    },
+                                    "confidential": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "logo": {
+                                        "type": "string",
+                                        "format": "uri",
+                                        "nullable": true
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "format": "uri",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Client created – redirects to /clients with the plain secret in session flash"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ]
+            }
+        },
+        "/clients/{client}": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Show an OAuth client and its authorized users",
+                "operationId": "8fc07341eb8ece62ad4fdda3a30c7b25",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client details with list of authorized users",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "client": {
+                                            "$ref": "#/components/schemas/OAuthClient"
+                                        },
+                                        "authorizedUsers": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "format": "email"
+                                                    },
+                                                    "avatar": {
+                                                        "type": "string",
+                                                        "format": "uri",
+                                                        "nullable": true
+                                                    },
+                                                    "scopes": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "authorized_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "nullable": true
+                                                    },
+                                                    "expires_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Client not found or not owned by user"
+                    }
+                },
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Update an OAuth client",
+                "operationId": "558832db987fc02c8a5107fb013891c9",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "My App Updated",
+                                        "maxLength": 255
+                                    },
+                                    "redirect_uris": {
+                                        "description": "Newline-separated redirect URIs",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "logo": {
+                                        "type": "string",
+                                        "format": "uri",
+                                        "nullable": true
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "format": "uri",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Client updated – redirects to /clients"
+                    },
+                    "404": {
+                        "description": "Client not found or not owned by user"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Delete (revoke) an OAuth client",
+                "operationId": "9102c26412072310db7ca015461a16cb",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Client deleted – redirects to /clients"
+                    },
+                    "404": {
+                        "description": "Client not found or not owned by user"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ]
+            }
+        },
+        "/clients/{client}/secret": {
+            "post": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Regenerate the client secret",
+                "operationId": "142470325154703af633ba13735bc2b5",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Secret regenerated – redirects to /clients with the new plain secret in session flash"
+                    },
+                    "404": {
+                        "description": "Client not found or not owned by user"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ]
+            }
+        },
+        "/profile": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Show profile edit page",
+                "operationId": "8cfcc99d8d1aa366314cd8abf9cd9c9a",
+                "responses": {
+                    "200": {
+                        "description": "Profile page (HTML/Inertia)"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Permanently delete the authenticated user's account",
+                "operationId": "1d6a5c6489e35a763aa97ebef12863ce",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "password"
+                                ],
+                                "properties": {
+                                    "password": {
+                                        "description": "Current password for confirmation",
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Account deleted – session invalidated, redirects to /"
+                    },
+                    "422": {
+                        "description": "Wrong password"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Update profile name and/or email",
+                "operationId": "354f5b23296bed4036564563e7423f43",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Jane Doe",
+                                        "maxLength": 255
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "jane@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Profile updated – redirects to /profile"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/google": {
+            "get": {
+                "tags": [
+                    "Google OAuth"
+                ],
+                "summary": "Redirect to Google OAuth consent screen",
+                "operationId": "041ae15aaa8ef4437f710361ff7480ab",
+                "responses": {
+                    "302": {
+                        "description": "Redirects to accounts.google.com for authentication"
+                    }
+                }
+            }
+        },
+        "/auth/google/callback": {
+            "get": {
+                "tags": [
+                    "Google OAuth"
+                ],
+                "summary": "Handle Google OAuth callback – login or register user",
+                "operationId": "1844f0d87fe4f80eb76df1e80abc7bae",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "description": "Authorization code returned by Google",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "state",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Authenticated – redirects to intended URL or dashboard"
+                    },
+                    "500": {
+                        "description": "Google OAuth error"
+                    }
+                }
+            }
+        },
+        "/oauth/authorize": {
+            "get": {
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "OAuth 2.0 Authorization endpoint – shows consent screen",
+                "description": "Redirects unauthenticated users to login. For already-authorized users, auto-approves and redirects to the redirect_uri with the authorization code.",
+                "operationId": "1212a442203f808450fe4a03f62de893",
+                "parameters": [
+                    {
+                        "name": "response_type",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "code"
+                            ]
+                        },
+                        "example": "code"
+                    },
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "redirect_uri",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "example": "https://myapp.com/callback"
+                    },
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "profile email"
+                    },
+                    {
+                        "name": "state",
+                        "in": "query",
+                        "description": "CSRF protection value – must match the value in the callback",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "code_challenge",
+                        "in": "query",
+                        "description": "PKCE code challenge (S256)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "code_challenge_method",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "S256"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "prompt",
+                        "in": "query",
+                        "description": "Pass \"consent\" to always show the consent screen even if previously authorized",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "consent"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Consent screen (HTML/Inertia) shown to the user"
+                    },
+                    "302": {
+                        "description": "Already authorized – redirects to redirect_uri?code=...&state=..."
+                    },
+                    "401": {
+                        "description": "Unauthenticated – redirects to /login"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "Approve the OAuth authorization request",
+                "description": "User submits the consent form to grant access. Issues an authorization code and redirects to the client's redirect_uri.",
+                "operationId": "fc9775462ce6e79af9c4b2e041602fd0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "auth_token"
+                                ],
+                                "properties": {
+                                    "auth_token": {
+                                        "description": "Opaque token embedded in the consent form",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Redirects to redirect_uri?code=AUTH_CODE&state=STATE"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "Deny the OAuth authorization request",
+                "operationId": "5c353a9a409d5323bcdc03d596b8503f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "auth_token"
+                                ],
+                                "properties": {
+                                    "auth_token": {
+                                        "description": "Opaque token embedded in the consent form",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Redirects to redirect_uri?error=access_denied"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ]
+            }
+        },
+        "/oauth/token": {
+            "post": {
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "Exchange authorization code for access token",
+                "description": "Token endpoint supporting authorization_code and client_credentials grants.",
+                "operationId": "a25b79aa97e58a0f9afeb28a45b92372",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "required": [
+                                    "grant_type",
+                                    "client_id",
+                                    "client_secret"
+                                ],
+                                "properties": {
+                                    "grant_type": {
+                                        "type": "string",
+                                        "example": "authorization_code",
+                                        "enum": [
+                                            "authorization_code",
+                                            "client_credentials",
+                                            "refresh_token"
+                                        ]
+                                    },
+                                    "client_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "client_secret": {
+                                        "description": "Required for confidential clients",
+                                        "type": "string"
+                                    },
+                                    "code": {
+                                        "description": "Required for authorization_code grant",
+                                        "type": "string"
+                                    },
+                                    "redirect_uri": {
+                                        "description": "Must match the one used in /oauth/authorize",
+                                        "type": "string",
+                                        "format": "uri"
+                                    },
+                                    "code_verifier": {
+                                        "description": "PKCE verifier – required if code_challenge was used",
+                                        "type": "string"
+                                    },
+                                    "refresh_token": {
+                                        "description": "Required for refresh_token grant",
+                                        "type": "string"
+                                    },
+                                    "scope": {
+                                        "description": "Optional subset of original scopes for client_credentials",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token issued successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        },
+                                        "expires_in": {
+                                            "description": "Seconds until access token expiry (15 days)",
+                                            "type": "integer",
+                                            "example": 1296000
+                                        },
+                                        "access_token": {
+                                            "type": "string"
+                                        },
+                                        "refresh_token": {
+                                            "description": "Only for authorization_code grant (valid 30 days)",
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request (missing parameters, wrong grant type)"
+                    },
+                    "401": {
+                        "description": "Invalid client credentials"
+                    }
+                }
+            }
+        },
+        "/oauth/token/refresh": {
+            "post": {
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "Refresh an access token (transient – same client session)",
+                "operationId": "9e043d8ee453a202efa85661f5d56c51",
+                "responses": {
+                    "200": {
+                        "description": "New access token issued"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "OAuthClient": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "My App"
+                    },
+                    "logo": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "icon": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "secret": {
+                        "description": "Only present for confidential clients",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "redirect_uris": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        }
+                    },
+                    "grant_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "revoked": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "sessionAuth": {
+                "type": "apiKey",
+                "description": "Session cookie (web authentication)",
+                "name": "droniauth_session",
+                "in": "cookie"
+            },
+            "oauth2": {
+                "type": "oauth2",
+                "description": "OAuth 2.0 Authorization Code flow issued by this server",
+                "flows": {
+                    "authorizationCode": {
+                        "authorizationUrl": "/oauth/authorize",
+                        "tokenUrl": "/oauth/token",
+                        "refreshUrl": "/oauth/token/refresh",
+                        "scopes": {
+                            "profile": "Read user profile (name, avatar)",
+                            "email": "Read email address",
+                            "roles": "Read roles and permissions",
+                            "admin": "Full admin access"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Authentication",
+            "description": "Login, register, logout and password management"
+        },
+        {
+            "name": "OAuth",
+            "description": "OAuth 2.0 authorization and token endpoints"
+        },
+        {
+            "name": "Clients",
+            "description": "OAuth client application management"
+        },
+        {
+            "name": "Profile",
+            "description": "Authenticated user profile"
+        },
+        {
+            "name": "Google OAuth",
+            "description": "Social login via Google"
+        }
+    ]
+}
